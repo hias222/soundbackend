@@ -17,14 +17,17 @@ type Client struct {
 }
 
 type Message struct {
-	Type   int        `json:"type"`
-	Body   string     `json:"body,omitempty"`
-	Slider SliderMove `json:"slider,omitempty"`
+	Type int    `json:"type"`
+	Body string `json:"body,omitempty"`
 }
 
-type SliderMove struct {
-	SliderID     int     `json:"id, omitempty"`
-	PercentValue float32 `json:"percent, omitempty"`
+type SoundMessage struct {
+	Type    int `json:"type"`
+	Message SliderMessage
+}
+type SliderMessage struct {
+	SliderID     int     `json:"id,omitempty"`
+	PercentValue float32 `json:"percent,omitempty"`
 }
 
 func (c *Client) Read() {
@@ -40,20 +43,30 @@ func (c *Client) Read() {
 			return
 		}
 
+		var jsonmessage bool
+
+		jsonmessage = true
+
 		//bytes := []byte(string(p))
 		log.Printf(string(p))
 
 		//Check for slider
-		var sliderMove SliderMove
-		sliderError := json.Unmarshal(p, &sliderMove)
+		var sliderMessage SliderMessage
+		sliderError := json.Unmarshal(p, &sliderMessage)
 		if sliderError != nil {
+			jsonmessage = false
 			log.Println("no json")
 		}
 
-		// { "SliderID": 1, "PercentValue": 0.2}
+		if jsonmessage {
+			soundmessage := SoundMessage{Type: 2, Message: sliderMessage}
+			c.Pool.Soundcast <- soundmessage
+			fmt.Printf("New Sound Message : %+v\n", soundmessage)
+		}
+
 		// {"id": 1, "percent": 0.2}
 		//sliderMoveStatic := SliderMove{SliderID: 1, PercentValue: 0}
-		message := Message{Type: messageType, Body: string(p), Slider: sliderMove}
+		message := Message{Type: messageType, Body: string(p)}
 		c.Pool.Broadcast <- message
 		fmt.Printf("Message Received: %+v\n", message)
 
