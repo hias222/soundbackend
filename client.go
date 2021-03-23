@@ -62,13 +62,16 @@ func (c *Client) Read() {
 			soundmessage := SoundMessage{Type: 2, Message: sliderMessage}
 			c.Pool.Soundcast <- soundmessage
 			fmt.Printf("New Sound Message : %+v\n", soundmessage)
+
+			message := Message{Type: messageType, Body: "Forward sound message"}
+			c.Pool.Broadcast <- message
+			fmt.Printf("Message Received: %+v\n", message)
+
 		}
 
 		// {"id": 1, "percent": 0.2}
-		//sliderMoveStatic := SliderMove{SliderID: 1, PercentValue: 0}
 		message := Message{Type: messageType, Body: string(p)}
 		c.Pool.Broadcast <- message
 		fmt.Printf("Message Received: %+v\n", message)
-
 	}
 }
